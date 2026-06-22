@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.engine import SessionDep
-from database.crud import users as users_crud
+from services.users import UserRepository
 from schemas.user import SUserAdd, SUser
 
 
@@ -16,12 +16,12 @@ async def get_users(
     offset: int = 0,
     keyword: str | None = None
 ):
-    return await users_crud.UserRepository.get_users(session, limit, offset, keyword)
+    return await UserRepository.get_users(session, limit, offset, keyword)
 
 
 @router.get("/{user_id}")
 async def get_user(user_id: int, session: SessionDep):
-    result = await users_crud.UserRepository.get_user(session, user_id)
+    result = await UserRepository.get_user(session, user_id)
 
     if result is None:
         raise HTTPException(
@@ -34,12 +34,12 @@ async def get_user(user_id: int, session: SessionDep):
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def add_user(user: SUserAdd, session: SessionDep) -> SUser:
 
-    return await users_crud.UserRepository.add_user(session, user)
+    return await UserRepository.add_user(session, user)
 
 
 @router.delete("/{user_id}", status_code=204)
 async def delete_user(user_id: int, session: SessionDep):
-    success = await users_crud.UserRepository.delete_user(session, user_id)
+    success = await UserRepository.delete_user(session, user_id)
 
     if not success:
         raise HTTPException(

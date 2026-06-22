@@ -45,10 +45,3 @@ async def get_db():
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
-
-
-async def create_tables():
-    """Тільки для розробки. В продакшені — alembic."""
-    async with engine.begin() as conn:
-        from database.models import Base as ModelsBase  # імпорт тут щоб уникнути циклів
-        await conn.run_sync(ModelsBase.metadata.create_all)
