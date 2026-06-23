@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.engine import SessionDep
 from services.users import UserRepository
-from schemas.user import SUserAdd, SUser
+from schemas.user import SUserAdd, SUser, SUserAdultCheck
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -46,3 +46,9 @@ async def delete_user(user_id: int, session: SessionDep):
             status_code=404,
             detail=f"User with id {user_id} not found"
         )
+
+
+@router.post("/user", status_code=204)
+async def is_user_adult(user: SUser, session: SessionDep) -> SUserAdultCheck:
+    # Implementation for checking if a user is an adult
+    return await UserRepository.validate_user_adult(user)

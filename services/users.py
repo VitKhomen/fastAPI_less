@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import UserModel
-from schemas.user import SUserAdd, SUser
+from schemas.user import SUserAdd, SUser, SUserAdultCheck
 
 
 class UserRepository:
@@ -58,3 +58,13 @@ class UserRepository:
         await session.delete(user)
         await session.commit()
         return True
+
+    @classmethod
+    async def validate_user_adult(cls, user: SUser) -> SUserAdultCheck:
+        is_adult = user.age >= 18
+        return SUserAdultCheck(
+            id=user.id,
+            name=user.name,
+            age=user.age,
+            is_adult=is_adult
+        )
