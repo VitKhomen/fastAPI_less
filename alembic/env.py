@@ -9,8 +9,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 
 from database.engine import Base
-from database.models import UserModel
-
+from database.models import UserModel, UserFeedbackModel
 load_dotenv()
 
 config = context.config

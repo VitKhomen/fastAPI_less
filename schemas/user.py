@@ -19,7 +19,21 @@ class SUser(SUserAdd):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SUserAdultCheck(SUserAdd):
-    is_adult: bool = Field(
-        ..., title="Indicates if the user is an adult"
+class SUserAgeCheck(BaseModel):
+    name: str
+    age: int
+
+
+class SUserAgeCheckResponse(SUserAgeCheck):
+    is_adult: bool
+
+
+class SUserFeedback(BaseModel):
+    user_id: int
+    feedback: str = Field(
+        ..., min_length=1,
+        max_length=256,
+        title="Feedback from the user",
     )
+
+    model_config = ConfigDict(from_attributes=True)

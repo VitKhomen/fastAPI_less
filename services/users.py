@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import UserModel
-from schemas.user import SUserAdd, SUser, SUserAdultCheck
+from database.models import UserModel, UserFeedbackModel
+from schemas.user import SUserAdd, SUser, SUserFeedback
 
 
 class UserRepository:
@@ -39,6 +39,7 @@ class UserRepository:
     async def add_user(cls, session: AsyncSession, user: SUserAdd) -> SUser:
         new_user = UserModel(
             name=user.name,
+            age=user.age
         )
 
         session.add(new_user)
@@ -60,11 +61,14 @@ class UserRepository:
         return True
 
     @classmethod
-    async def validate_user_adult(cls, user: SUser) -> SUserAdultCheck:
-        is_adult = user.age >= 18
-        return SUserAdultCheck(
-            id=user.id,
-            name=user.name,
-            age=user.age,
-            is_adult=is_adult
+    async def add_user_feedback(cls, session: AsyncSession, feedback: SUserFeedback) -> SUserFeedback:
+        new_feedback = UserFeedbackModel(
+            user_id=feedback.user_id,
+            feedback=feedback.feedback
         )
+
+        session.add(new_feedback)
+        await session.commit()
+        await session.refresh(new_feedback)
+
+        return SUserFeedback.model_validate(new_feedback)
