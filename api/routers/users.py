@@ -59,4 +59,5 @@ async def is_user_adult(user: SUserAgeCheck) -> SUserAgeCheckResponse:
 
 @router.post("/feedback", status_code=200)
 async def add_user_feedback(feedback: SUserFeedback, session: SessionDep) -> SUserFeedback:
-    return await UserRepository.add_user_feedback(session, feedback)
+    await UserRepository.add_user_feedback(session, feedback)
+    return {"message": f"Saved feedback for user {feedback.user_id}"}
