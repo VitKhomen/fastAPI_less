@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator,  EmailStr
 
 
 class SUserAdd(BaseModel):
@@ -28,6 +28,17 @@ class SUserAgeCheckResponse(SUserAgeCheck):
     is_adult: bool
 
 
+class SContact(BaseModel):
+    email: EmailStr
+    phone: str | None = Field(
+        default=None,
+        min_length=7,
+        max_length=15,
+        pattern=r"^\d+$",
+        title="Phone number",
+    )
+
+
 BANNED_WORDS = ["badword1", "badword2", "badword3"]
 
 
@@ -38,6 +49,7 @@ class SUserFeedback(BaseModel):
         max_length=500,
         title="Feedback from the user",
     )
+    contact: SContact
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -47,5 +59,6 @@ class SUserFeedback(BaseModel):
         v_lower = v.lower()
         for word in BANNED_WORDS:
             if word in v_lower:
-                raise ValueError("Использование недопустимых слов")
+                raise ValueError(
+                    "Using banned words in feedback is not allowed.")
         return v

@@ -58,6 +58,18 @@ async def is_user_adult(user: SUserAgeCheck) -> SUserAgeCheckResponse:
 
 
 @router.post("/feedback", status_code=200)
-async def add_user_feedback(feedback: SUserFeedback, session: SessionDep) -> SUserFeedback:
+async def add_user_feedback(
+    feedback: SUserFeedback,
+    session: SessionDep,
+    is_premium: bool = False  # ← query param: /feedback?is_premium=true
+):
+    user = await UserRepository.get_user(session, feedback.user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
     await UserRepository.add_user_feedback(session, feedback)
-    return {"message": f"Saved feedback for user {feedback.user_id}"}
+
+    msg = f"Спасибо, {user.name}! Ваш отзыв сохранён."
+    if is_premium:
+        msg += " Ваш отзыв будет рассмотрен в приоритетном порядке."
+    return {"message": msg}
