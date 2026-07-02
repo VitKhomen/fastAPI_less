@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.engine import SessionDep
 from services.users import UserRepository
-from schemas.user import SUserAdd, SUser, SUserAgeCheck, SUserAgeCheckResponse, SUserFeedback
+from schemas.user import SUserCreate, SUser, SUserAgeCheck, SUserAgeCheckResponse, SUserFeedback
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -32,9 +32,9 @@ async def get_user(user_id: int, session: SessionDep):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def add_user(user: SUserAdd, session: SessionDep) -> SUser:
+async def create_user(user: SUserCreate, session: SessionDep) -> SUser:
 
-    return await UserRepository.add_user(session, user)
+    return await UserRepository.create_user(session, user)
 
 
 @router.delete("/{user_id}", status_code=204)

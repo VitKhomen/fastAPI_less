@@ -1,19 +1,14 @@
 from pydantic import BaseModel, Field, ConfigDict, field_validator,  EmailStr
 
 
-class SUserAdd(BaseModel):
-    name: str = Field(
-        ..., min_length=2,
-        max_length=50,
-        title="Name of the user",
-    )
-    age: int = Field(
-        ..., ge=0,
-        title="Age of the user",
-    )
+class SUserCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=50)
+    age: int = Field(..., ge=0)
+    email: EmailStr
+    is_subscribed: bool = Field(default=False)
 
 
-class SUser(SUserAdd):
+class SUser(SUserCreate):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -49,7 +44,6 @@ class SUserFeedback(BaseModel):
         max_length=500,
         title="Feedback from the user",
     )
-    contact: SContact
 
     model_config = ConfigDict(from_attributes=True)
 

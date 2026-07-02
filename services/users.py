@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import UserModel, UserFeedbackModel
-from schemas.user import SUserAdd, SUser, SUserFeedback
+from schemas.user import SUserCreate, SUser, SUserFeedback
 
 
 class UserRepository:
@@ -36,10 +36,12 @@ class UserRepository:
         return SUser.model_validate(user)
 
     @classmethod
-    async def add_user(cls, session: AsyncSession, user: SUserAdd) -> SUser:
+    async def create_user(cls, session: AsyncSession, user: SUserCreate) -> SUser:
         new_user = UserModel(
             name=user.name,
-            age=user.age
+            age=user.age,
+            email=user.email,
+            is_subscribed=user.is_subscribed
         )
 
         session.add(new_user)
