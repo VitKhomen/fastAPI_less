@@ -67,3 +67,13 @@ class UserContactModel(Base):
         "UserModel",
         back_populates="contacts"
     )
+
+
+class ProductModel(Base):
+    __tablename__ = 'products'
+
+    product_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    price: Mapped[float] = mapped_column(Float, nullable=True)
