@@ -5,12 +5,19 @@ class SUserCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=50)
     age: int = Field(..., ge=0)
     email: EmailStr
+    password: str = Field(..., min_length=6)
     is_subscribed: bool = Field(default=False)
 
 
-class SUser(SUserCreate):
-    id: int
+class SUserBase(BaseModel):
+    name: str
+    age: int
+    email: EmailStr
+    is_subscribed: bool
 
+
+class SUser(SUserBase):
+    id: int
     model_config = ConfigDict(from_attributes=True)
 
 

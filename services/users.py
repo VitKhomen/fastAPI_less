@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import UserModel, UserFeedbackModel
 from schemas.user import SUserCreate, SUser, SUserFeedback
+from services.auth import AuthService
 
 
 class UserRepository:
@@ -41,7 +42,8 @@ class UserRepository:
             name=user.name,
             age=user.age,
             email=user.email,
-            is_subscribed=user.is_subscribed
+            is_subscribed=user.is_subscribed,
+            hashed_password=AuthService.hash_password(user.password)
         )
 
         session.add(new_user)

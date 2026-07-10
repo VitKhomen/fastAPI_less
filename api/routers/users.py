@@ -31,12 +31,6 @@ async def get_user(user_id: int, session: SessionDep):
     return result
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(user: SUserCreate, session: SessionDep) -> SUser:
-
-    return await UserRepository.create_user(session, user)
-
-
 @router.delete("/{user_id}", status_code=204)
 async def delete_user(user_id: int, session: SessionDep):
     success = await UserRepository.delete_user(session, user_id)

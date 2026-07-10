@@ -17,6 +17,8 @@ class UserModel(Base):
     is_subscribed: Mapped[bool] = mapped_column(
         Integer, nullable=False, default=False, server_default="0"
     )
+    hashed_password: Mapped[str | None] = mapped_column(
+        String(128), nullable=True)
 
     feedback: Mapped["UserFeedbackModel | None"] = relationship(
         "UserFeedbackModel",
