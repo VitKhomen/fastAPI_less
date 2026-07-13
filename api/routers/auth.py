@@ -28,9 +28,10 @@ async def login(credentials: SLoginRequest, response: Response, session: Session
     response.set_cookie(
         key="session_token",
         value=token,
-        httponly=True,   # недоступний з JS
-        secure=False,    # True в продакшені (тільки HTTPS)
-        samesite="lax"
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=3600  # ← 1 година
     )
 
     return {"message": "Login successful"}
@@ -53,4 +54,24 @@ async def get_current_user(
         "id": user.id,
         "name": user.name,
         "email": user.email,
+    }
+
+
+@router.get("/profile")
+async def get_profile(
+    session: SessionDep,
+    session_token: str | None = Cookie(default=None)
+):
+    if session_token is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    user = await AuthService.get_current_user(session, session_token)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "is_subscribed": user.is_subscribed,
     }
