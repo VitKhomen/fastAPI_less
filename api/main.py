@@ -6,7 +6,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
-from api.routers import users, product, auth, auth_basic
+from api.routers import users, product, auth, auth_basic, auth_jwt
 
 
 # читаємо змінні оточення
@@ -50,8 +50,9 @@ app = FastAPI(
 
 app.include_router(users.router)
 app.include_router(product.router)
-app.include_router(auth.router)
+# app.include_router(auth.router)
 # app.include_router(auth_basic.router)
+app.include_router(auth_jwt.router)
 
 
 @app.get("/")
