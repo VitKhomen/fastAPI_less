@@ -38,7 +38,7 @@ class JWTService:
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     @classmethod
-    def decode_token(token: str) -> dict | None:
+    def decode_token(cls, token: str) -> dict | None:
         """
         jwt.decode — перевіряє підпис і повертає payload
         якщо токен змінений або прострочений — кидає InvalidTokenError
@@ -81,3 +81,19 @@ class JWTService:
             select(UserModel).where(UserModel.email == email)
         )
         return result.scalar_one_or_none()
+
+    @classmethod
+    async def user_exists(cls, session: AsyncSession, username: str) -> bool:
+        result = await session.execute(
+            select(UserModel).where(UserModel.email == username)
+        )
+        return result.scalar_one_or_none() is not None
+
+    @classmethod
+    async def register(cls, session: AsyncSession, username: str, password: str) -> UserModel:
+        hashed_password = cls.hash_password(password)
+        new_user = UserModel(email=username, hashed_password=hashed_password)
+        session.add(new_user)
+        await session.commit()
+        await session.refresh(new_user)
+        return new_user

@@ -5,6 +5,9 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from api.routers import users, product, auth, auth_basic, auth_jwt
 
@@ -53,6 +56,11 @@ app.include_router(product.router)
 # app.include_router(auth.router)
 # app.include_router(auth_basic.router)
 app.include_router(auth_jwt.router)
+
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.get("/")
