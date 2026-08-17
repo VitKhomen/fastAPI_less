@@ -43,17 +43,17 @@ class JWTService:
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
     @classmethod
-    def create_access_token(cls, username: str) -> str:
+    def create_access_token(cls, username: str, role: str) -> str:
         return cls.create_access_token(
-            data={"sub": username},
+            data={"sub": username, "role": role},
             expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
             token_type="access"
         )
 
     @classmethod
-    def create_refresh_token(cls, username: str) -> str:
+    def create_refresh_token(cls, username: str, role: str) -> str:
         return cls.create_token(
-            data={"sub": username},
+            data={"sub": username, "role": role},
             expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
             token_type="refresh"
         )
@@ -84,7 +84,7 @@ class JWTService:
         if not AuthService.verify_password(password, user.hashed_password or ""):
             return None
 
-        access = cls.create_access_token(user.email)
+        access = cls.create_access_token(user.email, user.role)
         refresh = cls.create_refresh_token(user.email)
 
         # зберігаємо refresh на сервері
@@ -136,32 +136,22 @@ class JWTService:
     @classmethod
     async def get_current_user(cls, session: AsyncSession, token: str) -> UserModel | None:
         payload = cls.decode_token(token)
-        if payload is None:
+        if payload is None or payload.get("type") != "access":
             return None
-
-        if payload.get("type") != "access":
-            return None
-
         email = payload.get("sub")
         if email is None:
             return None
-
         result = await session.execute(
             select(UserModel).where(UserModel.email == email)
         )
         return result.scalar_one_or_none()
 
     @classmethod
-    async def user_exists(cls, session: AsyncSession, username: str) -> bool:
-        result = await session.execute(
-            select(UserModel).where(UserModel.email == username)
-        )
-        return result.scalar_one_or_none() is not None
-
-    @classmethod
-    async def register(cls, session: AsyncSession, username: str, password: str) -> UserModel:
+    async def register(
+            cls, session: AsyncSession, username: str, password: str, role: str = 'user') -> UserModel:
         hashed_password = cls.hash_password(password)
-        new_user = UserModel(email=username, hashed_password=hashed_password)
+        new_user = UserModel(
+            email=username, hashed_password=hashed_password, role=role)
         session.add(new_user)
         await session.commit()
         await session.refresh(new_user)

@@ -1,8 +1,21 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    admin = "admin"
+    user = "user"
+    guest = "guest"
+
+
+class SJWTRegister(BaseModel):
+    username: str
+    password: str
+    role: UserRole = UserRole.user  # за замовчуванням — user
 
 
 class SJWTLogin(BaseModel):
-    username: str  # або email — як хочеш
+    username: str
     password: str
 
 

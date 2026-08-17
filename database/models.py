@@ -19,6 +19,9 @@ class UserModel(Base):
     )
     hashed_password: Mapped[str | None] = mapped_column(
         String(128), nullable=True)
+    role: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="user", server_default="user"
+    )
 
     feedback: Mapped["UserFeedbackModel | None"] = relationship(
         "UserFeedbackModel",

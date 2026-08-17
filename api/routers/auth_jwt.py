@@ -4,8 +4,10 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from database.engine import SessionDep
-from services.auyh_jwt import JWTService
-from schemas.auth_jwt import SJWTLogin, SToken, SRefreshRequest
+from services.auth_jwt import JWTService
+from schemas.auth_jwt import SJWTLogin, SJWTRegister, SToken, SRefreshRequest
+from dependencies.auth import get_current_user, require_role
+from database.models import UserModel
 
 router = APIRouter(prefix="/jwt", tags=["jwt-auth"])
 
@@ -20,7 +22,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def register(request: Request, credentials: SJWTLogin, session: SessionDep):
     if await JWTService.user_exists(session, credentials.username):
         raise HTTPException(status_code=409, detail="User already exists")
-    await JWTService.register(session, credentials.username, credentials.password)
+    await JWTService.register(session, credentials.username, credentials.password, credentials.role)
     return {"message": "New user created"}
 
 
@@ -54,15 +56,33 @@ async def refresh(request: Request, body: SRefreshRequest):
 
 @router.get("/protected_resource")
 async def protected_resource(
-    session: SessionDep,
-    auth: HTTPAuthorizationCredentials = Depends(bearer)
+    current_user: UserModel = Depends(require_role("admin", "user"))
 ):
-    user = await JWTService.get_current_user(session, auth.credentials)
+    return {
+        "message": "Access granted",
+        "user": current_user.email,
+        "role": current_user.role
+    }
 
-    if user is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired access token"
-        )
 
-    return {"message": "Access granted", "user": user.email}
+# ← тільки admin
+@router.delete("/admin/delete_user/{user_id}")
+async def delete_user(
+    user_id: int,
+    current_user: UserModel = Depends(require_role("admin"))
+):
+    return {"message": f"User {user_id} deleted by admin {current_user.email}"}
+
+
+@router.put("/user/update_profile")
+async def update_profile(
+    current_user: UserModel = Depends(require_role("admin", "user"))
+):
+    return {"message": f"Profile updated for {current_user.email}"}
+
+
+@router.get("/public/info")
+async def public_info(
+    current_user: UserModel = Depends(require_role("admin", "user", "guest"))
+):
+    return {"message": "Public info", "your_role": current_user.role}
