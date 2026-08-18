@@ -6,7 +6,7 @@ from slowapi.util import get_remote_address
 from database.engine import SessionDep
 from services.auth_jwt import JWTService
 from schemas.auth_jwt import SJWTLogin, SJWTRegister, SToken, SRefreshRequest
-from dependencies.auth import get_current_user, require_role
+from dependencies.auth import get_current_user, require_role, get_rate_limit_by_role
 from database.models import UserModel
 
 router = APIRouter(prefix="/jwt", tags=["jwt-auth"])
@@ -55,7 +55,9 @@ async def refresh(request: Request, body: SRefreshRequest):
 
 
 @router.get("/protected_resource")
+@limiter.limit(get_rate_limit_by_role)
 async def protected_resource(
+    request: Request,
     current_user: UserModel = Depends(require_role("admin", "user"))
 ):
     return {
@@ -67,7 +69,9 @@ async def protected_resource(
 
 # ← тільки admin
 @router.delete("/admin/delete_user/{user_id}")
+@limiter.limit(get_rate_limit_by_role)
 async def delete_user(
+    request: Request,
     user_id: int,
     current_user: UserModel = Depends(require_role("admin"))
 ):
@@ -75,14 +79,18 @@ async def delete_user(
 
 
 @router.put("/user/update_profile")
+@limiter.limit(get_rate_limit_by_role)
 async def update_profile(
+    request: Request,
     current_user: UserModel = Depends(require_role("admin", "user"))
 ):
     return {"message": f"Profile updated for {current_user.email}"}
 
 
 @router.get("/public/info")
+@limiter.limit(get_rate_limit_by_role)
 async def public_info(
+    request: Request,
     current_user: UserModel = Depends(require_role("admin", "user", "guest"))
 ):
     return {"message": "Public info", "your_role": current_user.role}
