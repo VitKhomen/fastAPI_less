@@ -5,8 +5,9 @@ from slowapi.util import get_remote_address
 
 from database.engine import SessionDep
 from services.auth_jwt import JWTService
-from schemas.auth_jwt import SJWTLogin, SJWTRegister, SToken, SRefreshRequest
+from schemas.auth_jwt import SJWTLogin, SJWTRegister, SToken, SRefreshRequest, SResourceCreate
 from dependencies.auth import get_current_user, require_role, get_rate_limit_by_role
+from dependencies.ownership import check_ownership, resources
 from database.models import UserModel
 
 router = APIRouter(prefix="/jwt", tags=["jwt-auth"])
@@ -15,6 +16,33 @@ router = APIRouter(prefix="/jwt", tags=["jwt-auth"])
 bearer = HTTPBearer()
 
 limiter = Limiter(key_func=get_remote_address)
+
+
+@router.get("/admin")
+@limiter.limit(get_rate_limit_by_role)
+async def admin_only(
+    request: Request,
+    current_user: UserModel = Depends(require_role("admin"))
+):
+    return {"message": f"Admin panel, welcome {current_user.email}"}
+
+
+@router.get("/user")
+@limiter.limit(get_rate_limit_by_role)
+async def user_and_admin(
+    request: Request,
+    current_user: UserModel = Depends(require_role("admin", "user"))
+):
+    return {"message": f"User area, welcome {current_user.email}"}
+
+
+@router.get("/guest")
+@limiter.limit(get_rate_limit_by_role)
+async def all_roles(
+    request: Request,
+    current_user: UserModel = Depends(require_role("admin", "user", "guest"))
+):
+    return {"message": f"Public area, role: {current_user.role}"}
 
 
 @router.post("/register", status_code=201)
@@ -54,17 +82,53 @@ async def refresh(request: Request, body: SRefreshRequest):
     return SToken(**tokens)
 
 
-@router.get("/protected_resource")
+@router.get("/protected_resource/{username}")
 @limiter.limit(get_rate_limit_by_role)
-async def protected_resource(
+async def get_resource(
     request: Request,
-    current_user: UserModel = Depends(require_role("admin", "user"))
+    username: str,
+    # RBAC: guest, user, admin
+    current_user: UserModel = Depends(require_role("admin", "user", "guest")),
+    # Ownership: публічний або власник/адмін
+    # require_owner=False — guest може читати публічні
+    resource: dict = Depends(check_ownership(
+        allowed_roles=["admin", "user", "guest"],
+        require_owner=False
+    ))
 ):
-    return {
-        "message": "Access granted",
-        "user": current_user.email,
-        "role": current_user.role
-    }
+    return {"username": username, "resource": resource}
+
+
+@router.put("/protected_resource/{username}")
+@limiter.limit(get_rate_limit_by_role)
+async def update_resource(
+    request: Request,
+    username: str,
+    body: SResourceCreate,
+    current_user: UserModel = Depends(require_role("admin", "user")),
+    # require_owner=True — тільки власник або адмін
+    resource: dict = Depends(check_ownership(
+        allowed_roles=["admin", "user"],
+        require_owner=True
+    ))
+):
+    resources[username] = {
+        "content": body.content, "is_public": body.is_public}
+    return {"message": f"Resource updated for {username}"}
+
+
+@router.delete("/protected_resource/{username}", status_code=204)
+@limiter.limit(get_rate_limit_by_role)
+async def delete_resource(
+    request: Request,
+    username: str,
+    current_user: UserModel = Depends(require_role("admin", "user")),
+    resource: dict = Depends(check_ownership(
+        allowed_roles=["admin", "user"],
+        require_owner=True
+    ))
+):
+    del resources[username]
 
 
 # ← тільки admin
