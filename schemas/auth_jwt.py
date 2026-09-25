@@ -27,3 +27,8 @@ class SToken(BaseModel):
 
 class SRefreshRequest(BaseModel):
     refresh_token: str
+
+
+class SResourceCreate(BaseModel):
+    content: str
+    is_public: bool = False

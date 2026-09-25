@@ -8,6 +8,7 @@ from fastapi.openapi.utils import get_openapi
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from exceptions.base import AppException, app_exception_handler
 
 from api.routers import users, product, auth, auth_basic, auth_jwt
 
@@ -56,6 +57,8 @@ app.include_router(product.router)
 # app.include_router(auth.router)
 # app.include_router(auth_basic.router)
 app.include_router(auth_jwt.router)
+
+app.add_exception_handler(AppException, app_exception_handler)
 
 
 limiter = Limiter(key_func=get_remote_address)

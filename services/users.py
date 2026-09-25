@@ -5,6 +5,8 @@ from database.models import UserModel, UserFeedbackModel
 from schemas.user import SUserCreate, SUser, SUserFeedback
 from services.auth import AuthService
 
+from exceptions.base import UserNotFoundException, UserAlreadyExistsException
+
 
 class UserRepository:
 
@@ -32,12 +34,21 @@ class UserRepository:
         user = result.scalar_one_or_none()
 
         if user is None:
-            return None
+            raise UserNotFoundException(
+                detail=f"User with id {user_id} not found")
 
         return SUser.model_validate(user)
 
     @classmethod
     async def create_user(cls, session: AsyncSession, user: SUserCreate) -> SUser:
+        existing = await session.execute(
+            select(UserModel).where(UserModel.email == user.email)
+        )
+        if existing.scalar_one_or_none():
+            raise UserAlreadyExistsException(
+                detail=f"Email {user.email} is already registered"
+            )
+
         new_user = UserModel(
             name=user.name,
             age=user.age,
