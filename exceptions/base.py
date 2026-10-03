@@ -22,8 +22,10 @@ class AppException(Exception):
     error_code: str = "INTERNAL_ERROR"
     message: str = "Internal server error"
 
-    def __init__(self, detail: str | None = None):
+    def __init__(self, detail: str | None = None, code: int | None = None):
         self.detail = detail
+        if code is not None:
+            self.status_code = code
         super().__init__(self.message)
 
 
